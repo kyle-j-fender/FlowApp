@@ -11,29 +11,149 @@ import jsonImport as ji
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    st.markdown("# Calculations")
-    st.sidebar.markdown("# User Input")
+
+    # st.markdown("# Calculations")
+    # st.sidebar.markdown("# User Input")
     col0, col1, col2, col3 = st.columns([1, 1, 1, 1])
 
-    shc_on = st.sidebar.toggle("Sprinkler Head (Sq. Footage)")
-    if shc_on:
-        sprinkler_head_pressure = st.sidebar.number_input("Sprinkler Head Coverage", value=5)
+    col0.subheader("Inputs", divider=True)
+    col0.caption("Inputs from the user.")
+    col1.subheader("K-Factor", divider=True)
+    col1.caption("Insert Caption Here.")
+    col2.subheader("Q - Flow", divider=True)
+    col2.caption("This is the calculated flow.")
+    col3.subheader("Required Pressure", divider=True)
+    col3.caption("This is the pressure at the node.")
 
-    density_on = st.sidebar.toggle("Density")
-    if density_on:
-        density = st.sidebar.number_input("Density", value=0.05)
+    if 'df_parent' not in st.session_state:
+        st.session_state.df_parent = pd.DataFrame(
+        [
+            {"Field": "K-Factor", "Value": 5.6},
+            {"Field": "Q-Flow", "Value": 15.4},
+            {"Field": "Required Pressure", "Value": 7},
+        ]
+    )
 
-    df_on = st.sidebar.toggle("K-Factor")
-    if df_on:
-        determining_factor = st.sidebar.number_input("K-Factor", value=5.6)
+    if 'df_sprinkler' not in st.session_state:
+        st.session_state.df_sprinkler = pd.DataFrame(
+            [
+                {"Field": "Sprinkler Head Coverage (Sq. Ft)", "Value": 5.6},
+                {"Field": "Q-Flow", "Value": 15.4},
+            ]
+        )
 
-    square_root_on = st.sidebar.toggle("Square Root")
-    if square_root_on:
-        square_root_input = st.sidebar.number_input("What do you need the square root of?", value=256)
+    # Function to update dependent DataFrames
+    def update_dependent_dataframes():
+        df_parent = st.session_state.df_parent
 
-    squared_on = st.sidebar.toggle("Squared")
-    if squared_on:
-        squared_input = st.sidebar.number_input("What do you need squared?", value = 12)
+        # Update first child DataFrame
+        st.session_state.df_child1 = pd.DataFrame(
+            [
+                {"Field": "K-Factor", "Value": calc.determining_factor_calculated(df_parent.loc[1,'Value'],df_parent.loc[2,'Value'])},
+                {"Field": "Q-Flow", "Value": "{:.2f}".format(df_parent.loc[1,'Value'])},
+                {"Field": "Required Pressure", "Value": "{:.2f}".format(df_parent.loc[2,'Value'])},
+            ]
+        )
+
+        st.session_state.df_child2 = pd.DataFrame(
+            [
+                {"Field": "K-Factor", "Value": "{:.2f}".format(df_parent.loc[0, 'Value'])},
+                {"Field": "Q-Flow", "Value": calc.q_calculated(df_parent.loc[0, 'Value'],df_parent.loc[2, 'Value'])},
+                {"Field": "Required Pressure", "Value": "{:.2f}".format(df_parent.loc[2, 'Value'])},
+            ]
+        )
+
+        st.session_state.df_child3 = pd.DataFrame(
+            [
+                {"Field": "K-Factor", "Value": "{:.2f}".format(df_parent.loc[0, 'Value'])},
+                {"Field": "Q-Flow", "Value": "{:.2f}".format(df_parent.loc[1,'Value'])},
+                {"Field": "Required Pressure", "Value": calc.pressure_calculated(df_parent.loc[0, 'Value'],df_parent.loc[1, 'Value'])},
+            ]
+        )
+
+    def update_dependent_dataframes1():
+        df_sprinkler = st.session_state.df_sprinkler
+
+        st.session_state.df_child4 = pd.DataFrame(
+            [
+                {"Field": "Pressure", "Value": calc.pressure_calc_2(df_sprinkler.loc[0, 'Value'], df_sprinkler.loc[1, 'Value'])}
+            ]
+        )
+
+    if 'df_child1' not in st.session_state:
+        update_dependent_dataframes()
+
+    if 'df_child2' not in st.session_state:
+        update_dependent_dataframes()
+
+    if 'df_child3' not in st.session_state:
+        update_dependent_dataframes()
+
+    if 'df_child4' not in st.session_state:
+        update_dependent_dataframes1()
+
+    edited_df = col0.data_editor(st.session_state.df_parent, key="df_editor",hide_index=True,use_container_width=True)
+
+    if not edited_df.equals(st.session_state.df_parent):
+        st.session_state.df_parent = edited_df
+        update_dependent_dataframes()
+
+    second_table = col1.data_editor(st.session_state.df_child1,hide_index=True,use_container_width=True, disabled=True)
+    third_table = col2.data_editor(st.session_state.df_child2, hide_index=True, use_container_width=True, disabled=True)
+    fourth_table = col3.data_editor(st.session_state.df_child3, hide_index=True, use_container_width=True, disabled=True)
+
+    st.divider()
+
+    col5, col6 = st.columns([1, 1])
+    col5.subheader("Flow", divider=True)
+    col5.caption("This is pressure based on sprinkler head coverage and flow.")
+    edited_df_sprinkler = col5.data_editor(st.session_state.df_sprinkler, key="df_editor_6", hide_index=True, use_container_width=True)
+
+    if not edited_df_sprinkler.equals(st.session_state.df_sprinkler):
+        st.session_state.df_sprinkler = edited_df_sprinkler
+        update_dependent_dataframes1()
+
+    fifth_table = col5.data_editor(st.session_state.df_child4, hide_index=True, use_container_width=True, disabled=True)
+
+    # edited_df = col0.data_editor(df,hide_index=True,use_container_width=True)
+    # kfactor_input = edited_df.loc[0,'Value']
+    # qflow_input = edited_df.loc[1,'Value']
+    # requiredpressure_input = edited_df.loc[2,'Value']
+    #
+
+
+
+    # # Calulated K-Factor (based on Q-Flow and Required Pressure)
+    # det_calc = calc.determining_factor_calculated(qflow_input,requiredpressure_input)
+    # kfactor_df = pd.DataFrame(
+    #     [
+    #         {"Field": "K-Factor", "Value": det_calc},
+    #         {"Field": "Q-Flow", "Value": qflow_input},
+    #         {"Field": "Required Pressure", "Value": requiredpressure_input},
+    #     ]
+    # )
+    # kfactor_table = col1.data_editor(kfactor_df,hide_index=True,use_container_width=True,disabled=True)
+
+
+    # shc_on = st.sidebar.toggle("Sprinkler Head (Sq. Footage)")
+    # if shc_on:
+    #     sprinkler_head_pressure = st.sidebar.number_input("Sprinkler Head Coverage", value=5)
+    #
+    # density_on = st.sidebar.toggle("Density")
+    # if density_on:
+    #     density = st.sidebar.number_input("Density", value=0.05)
+    #
+    # df_on = st.sidebar.toggle("K-Factor")
+    # if df_on:
+    #     determining_factor = st.sidebar.number_input("K-Factor", value=5.6)
+    #
+    # square_root_on = st.sidebar.toggle("Square Root")
+    # if square_root_on:
+    #     square_root_input = st.sidebar.number_input("What do you need the square root of?", value=256)
+    #
+    # squared_on = st.sidebar.toggle("Squared")
+    # if squared_on:
+    #     squared_input = st.sidebar.number_input("What do you need squared?", value = 12)
 
     # flow_on = st.sidebar.toggle("Q")
     # if flow_on:
@@ -44,42 +164,42 @@ if __name__ == '__main__':
     #     required_pressure = st.sidebar.number_input("Required Pressure", value=16.14)
     #     square_root_rp = math.sqrt(required_pressure)
 
-    if (shc_on & density_on & df_on) | squared_on | square_root_on:
-        if (shc_on & density_on & df_on):
-            col0.subheader("Inputs", divider=True)
-            col0.caption("Inputs from the user.")
-            col1.subheader("Q - Flow", divider=True)
-            col1.caption("This is the calculated flow.")
-            col2.subheader("P (Required Pressure)", divider=True)
-            col2.caption("This is the pressure at the node.")
-
-            shp_container = col0.container(height=120)
-            density_container = col0.container(height=120)
-            kfactor_container = col0.container(height=120)
-            flow_column_display = col1.container(height=120)
-            pressure_display = col2.container(height=120)
-
-            shp_display = shp_container.metric(label="SHP", value=sprinkler_head_pressure)
-            density_display = density_container.metric(label="Density", value=density)
-            kfactor_display = kfactor_container.metric(label="K-Factor", value=determining_factor)
-            flow_calc_shp = sprinkler_head_pressure * density
-            flow_calc_display = flow_column_display.metric(label="Flow", value=flow_calc_shp)
-            rp_calc = (flow_calc_shp / determining_factor) ** 2
-            rp_calc_formatted = "{:.2f}".format(rp_calc)
-            rp_display = pressure_display.metric(label="PSI (from K-Factor & Q)", value=rp_calc_formatted)
-        if squared_on | square_root_on:
-            col3.subheader("Additional Math", divider=True)
-            col3.caption("This is for additional math that may be necessary.")
-            if square_root_on:
-                square_root_container = col3.container(height=120)
-                square_root_calc = math.sqrt(square_root_input)
-                square_root_display = square_root_container.metric(label="Square Root", value=square_root_calc)
-            if squared_on:
-                squared_container = col3.container(height=120)
-                squared_calc = squared_input ** 2
-                squared_display = squared_container.metric(label="Squared", value=squared_calc)
-    else:
-        st.title("Please input values into the sidebar before proceeding.")
+    # if (shc_on & density_on & df_on) | squared_on | square_root_on:
+    #     if (shc_on & density_on & df_on):
+    #         col0.subheader("Inputs", divider=True)
+    #         col0.caption("Inputs from the user.")
+    #         col1.subheader("Q - Flow", divider=True)
+    #         col1.caption("This is the calculated flow.")
+    #         col2.subheader("P (Required Pressure)", divider=True)
+    #         col2.caption("This is the pressure at the node.")
+    #
+    #         shp_container = col0.container(height=120)
+    #         density_container = col0.container(height=120)
+    #         kfactor_container = col0.container(height=120)
+    #         flow_column_display = col1.container(height=120)
+    #         pressure_display = col2.container(height=120)
+    #
+    #         shp_display = shp_container.metric(label="SHP", value=sprinkler_head_pressure)
+    #         density_display = density_container.metric(label="Density", value=density)
+    #         kfactor_display = kfactor_container.metric(label="K-Factor", value=determining_factor)
+    #         flow_calc_shp = sprinkler_head_pressure * density
+    #         flow_calc_display = flow_column_display.metric(label="Flow", value=flow_calc_shp)
+    #         rp_calc = (flow_calc_shp / determining_factor) ** 2
+    #         rp_calc_formatted = "{:.2f}".format(rp_calc)
+    #         rp_display = pressure_display.metric(label="PSI (from K-Factor & Q)", value=rp_calc_formatted)
+    #     if squared_on | square_root_on:
+    #         col3.subheader("Additional Math", divider=True)
+    #         col3.caption("This is for additional math that may be necessary.")
+    #         if square_root_on:
+    #             square_root_container = col3.container(height=120)
+    #             square_root_calc = math.sqrt(square_root_input)
+    #             square_root_display = square_root_container.metric(label="Square Root", value=square_root_calc)
+    #         if squared_on:
+    #             squared_container = col3.container(height=120)
+    #             squared_calc = squared_input ** 2
+    #             squared_display = squared_container.metric(label="Squared", value=squared_calc)
+    # else:
+    #     st.title("Please input values into the sidebar before proceeding.")
 
 
     # if flow_on & rp_on:
