@@ -17,13 +17,9 @@ if __name__ == '__main__':
     col0, col1, col2, col3 = st.columns([1, 1, 1, 1])
 
     col0.subheader("Inputs", divider=True)
-    col0.caption("Inputs from the user.")
     col1.subheader("K-Factor", divider=True)
-    col1.caption("Insert Caption Here.")
     col2.subheader("Q - Flow", divider=True)
-    col2.caption("This is the calculated flow.")
     col3.subheader("Required Pressure", divider=True)
-    col3.caption("This is the pressure at the node.")
 
     if 'df_parent' not in st.session_state:
         st.session_state.df_parent = pd.DataFrame(
@@ -121,7 +117,71 @@ if __name__ == '__main__':
     # requiredpressure_input = edited_df.loc[2,'Value']
     #
 
+    col6.subheader("Basic Calculations", divider=True)
 
+    sqroot = col6.number_input(
+        "Square Root", value=4.543, placeholder="Type a number...", format="%0.3f"
+    )
+    sq_answer = calc.square_root_eq(sqroot)
+    sq_display = col6.container(height=100)
+    shp_display = sq_display.metric(label="Squared Root", value=sq_answer)
+
+    squared = col6.number_input(
+        "Squared", value=5.432, placeholder="Type a number", format="%0.3f"
+    )
+    squared_answer = calc.squared(squared)
+    squared_display = col6.container(height=100)
+    squaredanswer_display = squared_display.metric(label="Squared", value=squared_answer)
+
+    st.divider()
+
+    col7, col8 = st.columns([1, 1])
+
+    col7.subheader("Distance (Head to Wall)", divider=True)
+    hw_feet = col7.number_input(
+        "Feet (HW)", value=5.678, placeholder="Type a number...", format="%0.3f"
+    )
+    hw_inches = col7.number_input(
+        "Inches (HW)", value=5.4534, placeholder="Type a number...", format="%0.3f"
+    )
+    hw_answer = calc.hw_total(hw_feet, hw_inches)
+    hw_display = col7.metric(label = "Head to Wall (Conversion)", value=hw_answer)
+
+    col8.subheader("Distance (Head to Head)", divider=True)
+    hh_feet = col8.number_input(
+        "Feet (HH)", value=5.54354, placeholder="Type a number...", format="%0.3f"
+    )
+    hh_inches = col8.number_input(
+        "Inches (HH)", value=23.48434, placeholder="Type a number...", format="%0.3f"
+    )
+    hh_answer = calc.hh_total(hh_feet, hh_inches)
+    hh_display = col8.metric(label = "Head to Head (Conversion)", value = hh_answer)
+
+    st.divider()
+    st.header("Distance", divider=True)
+
+    col9, col10 = st.columns([1, 1])
+
+    distance_east = col9.number_input(
+        "East (Feet in Decimals)", value=5.323, placeholder="Type a number...", format="%0.3f"
+    )
+    distance_west = col9.number_input(
+        "West (Feet in Decimals)", value=5.321, placeholder="Type a number...", format="%0.3f"
+    )
+    distance_north = col9.number_input(
+        "North (Feet in Decimals)", value=5.123, placeholder="Type a number...", format="%0.3f"
+    )
+    distance_south = col9.number_input(
+        "South (Feet in Decimals)", value=5.534, placeholder="Type a number...", format="%0.3f"
+    )
+
+    e2w = calc.distance_calculation(distance_east, distance_west)
+    n2s = calc.distance_calculation(distance_north, distance_south)
+    sca = calc.area_calculation(e2w, n2s)
+
+    e2w_display = col10.metric(label="East to West Distance (Ft)", value=e2w)
+    n2s_display = col10.metric(label="North to South (Ft)", value=n2s)
+    sca_display = col10.metric(label="Sprinker Coverage Area (Ft^2)", value=sca)
 
     # # Calulated K-Factor (based on Q-Flow and Required Pressure)
     # det_calc = calc.determining_factor_calculated(qflow_input,requiredpressure_input)
